@@ -272,14 +272,6 @@ You would need to:
 - Configure Kubernetes RBAC and Pod Security Standards
 - Enable audit logging and monitoring
 
-## Next Steps
-
-- [ ] Test Iceberg table operations
-- [ ] Test Dagster orchestration
-- [ ] Add data ingestion examples
-- [ ] Add sample datasets
-- [ ] Documentation for common queries
-
 ## Documentation
 
 - [Setup Scripts](scripts/README.md) - Detailed script documentation

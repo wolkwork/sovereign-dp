@@ -10,6 +10,8 @@ requires-python = ">=3.10"
 dependencies = [
     "dagster>=1.6.0",
     "dagster-aws>=0.22.0",
+    "dagster-postgres>=0.22.0",
+    "dagster-k8s>=0.22.0",
     "trino>=0.327.0",
     "pandas>=2.0.0",
     "pyarrow>=14.0.0",
