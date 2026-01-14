@@ -1,4 +1,6 @@
-# sovereign-dp - Data Platform as a Service
+# sovereign-dp - Data Platform to be deployed on your machine(s)
+
+<img src="sovereign-dp.png" alt="Sovereign Data Platform Architecture" width="600">
 
 **A sovereign data lakehouse platform built entirely on open-source technologies.**
 
@@ -10,7 +12,7 @@ This project demonstrates that you don't need to depend on AWS, Azure, or GCP fo
 - **Nessie** for version control of data
 - **rustfs** for S3-compatible object storage
 - **JupyterHub** for interactive data analysis
-- **Dagster** for data orchestration (optional)
+- **Dagster** for data orchestration (optiona)
 
 This is a local development environment and proof of concept—not a production-ready system. But it proves what's possible when we build with sovereignty in mind.
 
@@ -18,10 +20,10 @@ This is a local development environment and proof of concept—not a production-
 
 ### Prerequisites
 
-- Docker Desktop (or Docker Engine)
-- kubectl
-- Helm 3
-- kind (will be installed by setup script if needed)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or [Docker Engine](https://docs.docker.com/engine/install/))
+- [kubectl](https://kubernetes.io/docs/tasks/tools/)
+- [Helm 3](https://helm.sh/docs/intro/install/)
+- [kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation) (will be installed by setup script if needed)
 
 ### Minimum System Requirements
 
@@ -34,14 +36,6 @@ The platform runs multiple services that require adequate resources:
 | **With Dagster** | 20 GB | 8 | Full stack including orchestration |
 
 **Docker Desktop users**: Go to Settings → Resources and allocate at least the minimum memory/CPUs above.
-
-Resource breakdown by service:
-- **Trino Coordinator**: 2 GB memory, 1 CPU
-- **Trino Worker**: 2 GB memory, 1 CPU
-- **JupyterHub**: 1.5 GB memory, 0.5 CPU
-- **Nessie**: 512 MB memory
-- **rustfs**: 256 MB memory
-- **Dagster** (optional): 2 GB memory, 1 CPU
 
 ### Setup
 
@@ -85,22 +79,66 @@ Alternatively, run the setup scripts individually:
 
 ### Access Services
 
-Once deployed, access the services at:
+Once deployed, the following web UIs are available:
 
-- **rustfs Console**: http://localhost:9001 (user: rustfsadmin, pass: rustfsadmin)
-- **rustfs API**: http://localhost:9000
-- **Trino Web UI**: http://localhost:8080
-- **JupyterHub**: http://localhost:8888 (user: any, pass: jupyter)
-- **Dagster UI**: http://localhost:3000 (if deployed with --with-dagster)
+| Service | URL | Credentials | Description |
+|---------|-----|-------------|-------------|
+| **rustfs Console** | http://localhost:9001 | user: `rustfsadmin`, pass: `rustfsadmin` | Object storage browser - view buckets, upload files, manage S3 objects |
+| **Trino Web UI** | http://localhost:8080 | No authentication required | Query monitor - view running queries, query history, cluster status, worker nodes |
+| **JupyterHub** | http://localhost:8888 | user: any username, pass: `jupyter` | Interactive notebooks - run SQL queries, analyze data, create visualizations |
+| **Dagster UI** | http://localhost:3000 | No authentication required | Pipeline orchestration - trigger jobs, view runs, monitor assets (only if deployed with `--with-dagster`) |
+
+#### Nessie UI (Catalog Browser)
+
+Nessie provides a web UI for browsing the data catalog, viewing table history, and managing branches. It's not exposed externally by default, but you can access it via port-forward:
+
+```bash
+# Start port-forward to Nessie
+kubectl port-forward -n sovereign-dp svc/nessie 19120:19120
+
+# Then open in browser
+open http://localhost:19120
+```
+
+The Nessie UI allows you to:
+- Browse namespaces and tables in the catalog
+- View commit history (similar to git log)
+- Create and manage branches for data versioning
+- Compare differences between branches
+
+#### API Endpoints
+
+For programmatic access:
+
+| Service | URL | Description |
+|---------|-----|-------------|
+| rustfs S3 API | http://localhost:9000 | S3-compatible API for object storage |
+| Nessie REST API | Internal: `http://nessie.sovereign-dp:19120/api/v2` | Iceberg catalog REST API |
+| Trino | Internal: `http://trino.sovereign-dp:8080` | JDBC/HTTP endpoint for SQL queries |
 
 ### Test the Platform
 
 #### Option 1: Using JupyterHub Notebooks (Recommended)
 
-1. Open http://localhost:8888
-2. Login with any username and password: `jupyter`
-3. Upload or open the sample notebook: `notebooks/trino-iceberg-demo.ipynb`
-4. Run the cells to query Iceberg tables with SQL
+**Step 1: Access JupyterHub**
+1. Open your browser and navigate to http://localhost:8888
+
+**Step 2: Login**
+1. Enter any username (e.g., `admin` or your name)
+2. Enter password: `jupyter`
+3. Click "Sign In"
+4. Wait for your notebook server to spawn (this may take 30-60 seconds on first login)
+
+**Step 3: Run the Demo Notebook**
+1. In the file browser, open `trino-iceberg-demo.ipynb`
+2. Run cells sequentially using `Shift+Enter`
+3. The notebook will:
+   - Connect to Trino and verify the connection
+   - Show available catalogs and schemas
+   - Create a demo schema and sample sales table
+   - Insert sample data and run analytical queries
+   - Generate a revenue visualization chart
+   - Demonstrate Iceberg time travel (table snapshots)
 
 The notebook environment includes:
 - `trino` - Python client for Trino/Iceberg
@@ -247,6 +285,19 @@ You would need to:
 - [Setup Scripts](scripts/README.md) - Detailed script documentation
 - [CLAUDE.md](CLAUDE.md) - Project instructions for Claude Code
 - [AGENTS.md](AGENTS.md) - Workflow and session management
+
+## Resource Breakdown
+
+Memory and CPU usage by service:
+
+| Service | Memory | CPU |
+|---------|--------|-----|
+| Trino Coordinator | 2 GB | 1 |
+| Trino Worker | 2 GB | 1 |
+| JupyterHub | 1.5 GB | 0.5 |
+| Nessie | 512 MB | - |
+| rustfs | 256 MB | - |
+| Dagster (optional) | 2 GB | 1 |
 
 ## License
 

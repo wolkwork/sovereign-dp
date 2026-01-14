@@ -4,7 +4,8 @@ FROM quay.io/jupyter/minimal-notebook:latest
 RUN pip install --no-cache-dir \
     trino \
     pandas \
-    ipython-sql
+    ipython-sql \
+    'prettytable<3.10'
 
 # Set Trino connection defaults
 ENV TRINO_HOST="trino.pileus.svc.cluster.local"

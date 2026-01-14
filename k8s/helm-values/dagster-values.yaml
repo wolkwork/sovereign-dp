@@ -8,44 +8,61 @@ dagsterWebserver:
   service:
     type: NodePort
     port: 3000
+  livenessProbe:
+    httpGet:
+      path: /server_info
+      port: 3000
+    initialDelaySeconds: 120
+    periodSeconds: 20
+    timeoutSeconds: 10
+    failureThreshold: 5
+  readinessProbe:
+    httpGet:
+      path: /server_info
+      port: 3000
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 10
+  startupProbe:
+    httpGet:
+      path: /server_info
+      port: 3000
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 30
   resources:
     requests:
-      memory: 256Mi
+      memory: 512Mi
       cpu: 100m
     limits:
-      memory: 512Mi
+      memory: 1Gi
       cpu: 500m
 
 dagsterDaemon:
   enabled: true
   resources:
     requests:
-      memory: 256Mi
+      memory: 512Mi
       cpu: 100m
     limits:
-      memory: 512Mi
+      memory: 1Gi
       cpu: 500m
 
 # External PostgreSQL (deployed separately)
 postgresql:
   enabled: false
+  postgresqlHost: dagster-postgresql.sovereign-dp.svc.cluster.local
+  postgresqlPort: 5432
+  postgresqlUsername: dagster
+  postgresqlDatabase: dagster
 
 generatePostgresqlPasswordSecret: false
 
 postgresqlSecretName: dagster-postgresql-secret
 
-# Compute logs stored in rustfs
+# Compute logs - using default for now
 computeLogs:
-  enabled: true
-  custom:
-    module: dagster_aws.s3.compute_log_manager
-    class: S3ComputeLogManager
-    config:
-      bucket: sovereign-dp
-      prefix: dagster/compute-logs
-      endpoint_url: http://rustfs.sovereign-dp.svc.cluster.local:9000
-      use_ssl: false
-      region_name: eu-west-1
+  enabled: false
 
 # Run launcher configuration
 runLauncher:
