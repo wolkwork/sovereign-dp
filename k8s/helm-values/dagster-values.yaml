@@ -32,20 +32,20 @@ dagsterWebserver:
     failureThreshold: 30
   resources:
     requests:
-      memory: 512Mi
+      memory: 1Gi
       cpu: 100m
     limits:
-      memory: 1Gi
+      memory: 2Gi
       cpu: 500m
 
 dagsterDaemon:
   enabled: true
   resources:
     requests:
-      memory: 512Mi
+      memory: 1Gi
       cpu: 100m
     limits:
-      memory: 1Gi
+      memory: 2Gi
       cpu: 500m
 
 # External PostgreSQL (deployed separately)
