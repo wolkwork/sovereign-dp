@@ -1,0 +1,63 @@
+# Trino Helm values for sovereign-dp sovereign-dp
+
+server:
+  workers: 1
+
+coordinator:
+  jvm:
+    maxHeapSize: "2G"
+  resources:
+    requests:
+      memory: "2Gi"
+      cpu: "1"
+    limits:
+      memory: "4Gi"
+      cpu: "2"
+
+worker:
+  jvm:
+    maxHeapSize: "2G"
+  resources:
+    requests:
+      memory: "2Gi"
+      cpu: "1"
+    limits:
+      memory: "4Gi"
+      cpu: "2"
+
+service:
+  type: NodePort
+  port: 8080
+  nodePort: 30080
+
+# Catalogs configuration
+additionalCatalogs:
+  iceberg: |
+    connector.name=iceberg
+    iceberg.catalog.type=nessie
+    iceberg.nessie-catalog.uri=http://nessie:19120/api/v2
+    iceberg.nessie-catalog.default-warehouse-dir=s3://sovereign-dp/warehouse
+    iceberg.nessie-catalog.ref=main
+    fs.native-s3.enabled=true
+    s3.endpoint=http://rustfs:9000
+    s3.region=us-east-1
+    s3.path-style-access=true
+    s3.aws-access-key=rustfsadmin
+    s3.aws-secret-key=rustfsadmin
+
+# Web UI auth (disable for local dev)
+auth:
+  enabled: false
+
+# Environment variables for S3 access
+env:
+  - name: AWS_ACCESS_KEY_ID
+    valueFrom:
+      secretKeyRef:
+        name: s3-credentials
+        key: access-key
+  - name: AWS_SECRET_ACCESS_KEY
+    valueFrom:
+      secretKeyRef:
+        name: s3-credentials
+        key: secret-key

@@ -1,0 +1,105 @@
+# JupyterHub Helm values for sovereign-dp sovereign-dp
+
+# Hub configuration
+hub:
+  config:
+    # Use dummy authenticator for local development
+    DummyAuthenticator:
+      password: jupyter
+    JupyterHub:
+      authenticator_class: dummy
+
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 250m
+    limits:
+      memory: 1Gi
+      cpu: 500m
+
+  # Database (SQLite for local dev)
+  db:
+    type: sqlite-memory
+
+# Proxy configuration
+proxy:
+  service:
+    type: NodePort
+    nodePorts:
+      http: 30888
+
+  chp:
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
+      limits:
+        memory: 512Mi
+        cpu: 200m
+
+# Single user server configuration
+singleuser:
+  # Network policy - allow access to internal data platform services
+  networkPolicy:
+    enabled: true
+    # Allow egress to private IPs (internal cluster services like Trino, Nessie, rustfs)
+    egressAllowRules:
+      privateIPs: true
+  # Custom image with pre-installed packages (build with ./scripts/build-notebook-image.sh)
+  image:
+    name: sovereign-dp-demo
+    tag: "latest"
+    pullPolicy: Never  # Use local image loaded into kind
+
+  # Memory and CPU limits per user
+  memory:
+    limit: 2G
+    guarantee: 512M
+  cpu:
+    limit: 1
+    guarantee: 0.5
+
+  # Storage
+  storage:
+    capacity: 5Gi
+    dynamic:
+      storageClass: standard
+
+  # Default URL to redirect users to
+  defaultUrl: "/lab"
+
+  # Environment variables (packages pre-installed in image)
+  extraEnv:
+    TRINO_HOST: "trino.sovereign-dp.svc.cluster.local"
+    TRINO_PORT: "8080"
+    TRINO_CATALOG: "iceberg"
+
+  # Copy demo notebook to user's home on startup
+  lifecycleHooks:
+    postStart:
+      exec:
+        command:
+          - "sh"
+          - "-c"
+          - "cp -f /opt/notebooks/*.ipynb /home/jovyan/ 2>/dev/null || true"
+
+# Scheduling configuration
+scheduling:
+  userScheduler:
+    enabled: false
+
+  userPlaceholder:
+    enabled: false
+
+# Enable culling of idle servers
+cull:
+  enabled: true
+  timeout: 3600  # 1 hour
+  every: 600     # Check every 10 minutes
+
+# Pre-pull images to nodes
+prePuller:
+  hook:
+    enabled: false
+  continuous:
+    enabled: false

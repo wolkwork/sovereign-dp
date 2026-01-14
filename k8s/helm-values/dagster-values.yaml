@@ -1,0 +1,79 @@
+# Dagster Helm values for sovereign-dp lakehouse
+
+global:
+  serviceAccountName: dagster
+
+dagsterWebserver:
+  replicaCount: 1
+  service:
+    type: NodePort
+    port: 3000
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+
+dagsterDaemon:
+  enabled: true
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+
+# External PostgreSQL (deployed separately)
+postgresql:
+  enabled: false
+
+generatePostgresqlPasswordSecret: false
+
+postgresqlSecretName: dagster-postgresql-secret
+
+# Compute logs stored in rustfs
+computeLogs:
+  enabled: true
+  custom:
+    module: dagster_aws.s3.compute_log_manager
+    class: S3ComputeLogManager
+    config:
+      bucket: sovereign-dp
+      prefix: dagster/compute-logs
+      endpoint_url: http://rustfs.sovereign-dp.svc.cluster.local:9000
+      use_ssl: false
+      region_name: eu-west-1
+
+# Run launcher configuration
+runLauncher:
+  type: K8sRunLauncher
+  config:
+    k8sRunLauncher:
+      envSecrets:
+        - name: dagster-env
+
+# User code deployments
+dagster-user-deployments:
+  enabled: true
+  deployments:
+    - name: sovereign-dp-pipelines
+      image:
+        repository: sovereign-dp-dagster
+        tag: latest
+        pullPolicy: IfNotPresent
+      dagsterApiGrpcArgs:
+        - "--module-name"
+        - "sovereign_dp_dagster"
+      port: 3030
+      envSecrets:
+        - name: dagster-env
+      resources:
+        requests:
+          memory: 256Mi
+          cpu: 100m
+        limits:
+          memory: 1Gi
+          cpu: 1

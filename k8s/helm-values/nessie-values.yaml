@@ -1,0 +1,45 @@
+# Nessie Helm values for sovereign-dp lakehouse
+
+replicaCount: 1
+
+image:
+  repository: ghcr.io/projectnessie/nessie
+  tag: "0.106.1"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 19120
+
+# Version store configuration (in-memory for dev)
+versionStore:
+  type: IN_MEMORY
+
+# Resources
+resources:
+  requests:
+    memory: "512Mi"
+    cpu: "250m"
+  limits:
+    memory: "1Gi"
+    cpu: "500m"
+
+# Java options
+env:
+  - name: JAVA_OPTS
+    value: "-Xmx512m"
+
+# Liveness and readiness probes
+livenessProbe:
+  httpGet:
+    path: /api/v2/config
+    port: 19120
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+readinessProbe:
+  httpGet:
+    path: /api/v2/config
+    port: 19120
+  initialDelaySeconds: 10
+  periodSeconds: 5

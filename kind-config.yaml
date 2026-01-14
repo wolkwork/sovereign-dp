@@ -1,0 +1,33 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: sovereign-dp
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+    - |
+      kind: InitConfiguration
+      nodeRegistration:
+        kubeletExtraArgs:
+          node-labels: "ingress-ready=true"
+    extraPortMappings:
+    # rustfs (S3-compatible storage)
+    - containerPort: 30900
+      hostPort: 9000
+      protocol: TCP
+    - containerPort: 30901
+      hostPort: 9001
+      protocol: TCP
+    # Trino
+    - containerPort: 30080
+      hostPort: 8080
+      protocol: TCP
+    # JupyterHub
+    - containerPort: 30888
+      hostPort: 8888
+      protocol: TCP
+    # Dagster
+    - containerPort: 30300
+      hostPort: 3000
+      protocol: TCP
+  # Single worker node to conserve disk space (images loaded once per node)
+  - role: worker

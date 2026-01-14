@@ -1,0 +1,91 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rustfs-data
+  namespace: sovereign-dp
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rustfs
+  namespace: sovereign-dp
+  labels:
+    app: rustfs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rustfs
+  template:
+    metadata:
+      labels:
+        app: rustfs
+    spec:
+      securityContext:
+        fsGroup: 10001
+      containers:
+      - name: rustfs
+        image: rustfs/rustfs:latest
+        ports:
+        - containerPort: 9000
+          name: s3
+        - containerPort: 9001
+          name: console
+        env:
+        - name: RUSTFS_ROOT_USER
+          value: "rustfsadmin"
+        - name: RUSTFS_ROOT_PASSWORD
+          value: "rustfsadmin"
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1"
+        livenessProbe:
+          tcpSocket:
+            port: 9000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          tcpSocket:
+            port: 9000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: rustfs-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rustfs
+  namespace: sovereign-dp
+  labels:
+    app: rustfs
+spec:
+  type: NodePort
+  ports:
+  - port: 9000
+    targetPort: 9000
+    nodePort: 30900
+    protocol: TCP
+    name: s3
+  - port: 9001
+    targetPort: 9001
+    nodePort: 30901
+    protocol: TCP
+    name: console
+  selector:
+    app: rustfs

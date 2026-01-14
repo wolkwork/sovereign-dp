@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nessie
+  namespace: sovereign-dp
+  labels:
+    app: nessie
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nessie
+  template:
+    metadata:
+      labels:
+        app: nessie
+    spec:
+      containers:
+      - name: nessie
+        image: ghcr.io/projectnessie/nessie:0.106.1
+        ports:
+        - containerPort: 19120
+          name: http
+        env:
+        - name: JAVA_OPTS
+          value: "-Xmx512m"
+        - name: NESSIE_VERSION_STORE_TYPE
+          value: "IN_MEMORY"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /api/v2/config
+            port: 19120
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/v2/config
+            port: 19120
+          initialDelaySeconds: 10
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nessie
+  namespace: sovereign-dp
+  labels:
+    app: nessie
+spec:
+  type: ClusterIP
+  ports:
+  - port: 19120
+    targetPort: 19120
+    protocol: TCP
+    name: http
+  selector:
+    app: nessie

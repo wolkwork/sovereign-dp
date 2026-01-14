@@ -1,0 +1,22 @@
+# PostgreSQL Helm values for Dagster metadata store
+# Bitnami PostgreSQL chart
+
+auth:
+  username: dagster
+  password: dagster
+  database: dagster
+
+primary:
+  persistence:
+    enabled: true
+    size: 1Gi
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+
+# Single replica for local development
+architecture: standalone
